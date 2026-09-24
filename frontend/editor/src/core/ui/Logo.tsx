@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import markUrl from "@app/assets/brand/branding-logo/logo-mark.svg";
 import wordmarkLightUrl from "@app/assets/brand/branding-logo/wordmark-light.svg";
 import wordmarkDarkUrl from "@app/assets/brand/branding-logo/wordmark-dark.svg";
+import { useAppConfig } from "@app/contexts/AppConfigContext";
 import "@app/ui/Logo.css";
 
 /** iconOnly = mark; textOnly = "Stirling" wordmark; iconAndText = both. */
@@ -38,6 +39,8 @@ export function Logo({
   style,
   alt = "Stirling",
 }: LogoProps) {
+  const { config } = useAppConfig();
+  const customLogoUrl = config?.appLogoUrl;
   const showIcon = variant === "iconOnly" || variant === "iconAndText";
   const showText = variant === "textOnly" || variant === "iconAndText";
 
@@ -59,7 +62,14 @@ export function Logo({
 
   return (
     <span className={cls} style={{ ...layoutStyle, ...style }}>
-      {showIcon && (
+      {customLogoUrl ? (
+        <img
+          className="sui-logo__custom"
+          src={customLogoUrl}
+          alt={alt}
+          style={{ height: showText ? textHeight : iconHeight }}
+        />
+      ) : showIcon ? (
         <img
           className="sui-logo__mark"
           src={markUrl}
@@ -67,8 +77,8 @@ export function Logo({
           aria-hidden={showText ? true : undefined}
           style={{ height: iconHeight }}
         />
-      )}
-      {showText && (
+      ) : null}
+      {!customLogoUrl && showText && (
         <>
           <img
             className="sui-logo__wordmark sui-logo__wordmark--light"

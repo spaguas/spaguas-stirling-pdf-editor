@@ -12,7 +12,8 @@
 }
 
 .sui-logo__mark,
-.sui-logo__wordmark {
+.sui-logo__wordmark,
+.sui-logo__custom {
   display: block;
   width: auto;
 }

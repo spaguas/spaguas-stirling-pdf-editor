@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { SettingsToggleRow } from "@app/components/shared/config/SettingsToggleRow";
 import { InfoTooltip } from "@app/ui/InfoTooltip";
 import { useTranslation } from "react-i18next";
@@ -9,6 +9,7 @@ import {
   Group,
   MultiSelect,
   Select,
+  FileInput,
 } from "@mantine/core";
 import PendingBadge from "@app/components/shared/config/PendingBadge";
 import {
@@ -19,6 +20,10 @@ import {
 } from "@app/i18n";
 import { Z_INDEX_OVER_CONFIG_MODAL } from "@app/styles/zIndex";
 import type { GeneralCardProps } from "@app/components/shared/config/configSections/server/serverCardProps";
+import apiClient from "@app/services/apiClient";
+import { alert } from "@app/components/toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { qk } from "@app/query/keys";
 
 /** Branding, languages and the system-wide toggles. Writes ui.* and system.*. */
 export function SystemCard({
@@ -28,6 +33,38 @@ export function SystemCard({
   loginEnabled,
 }: GeneralCardProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [logoUploading, setLogoUploading] = useState(false);
+
+  const uploadLogo = async (file: File | null) => {
+    if (!file) return;
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      await apiClient.post("/api/v1/admin/settings/branding/logo", formData);
+      await queryClient.invalidateQueries({ queryKey: qk.appConfig() });
+      alert({
+        alertType: "success",
+        title: t("admin.settings.general.logo.saved", "Logo updated"),
+        body: t(
+          "admin.settings.general.logo.savedDescription",
+          "The new logo is now active.",
+        ),
+      });
+    } catch {
+      alert({
+        alertType: "error",
+        title: t("admin.error", "Error"),
+        body: t(
+          "admin.settings.general.logo.error",
+          "Failed to upload the logo. Use a PNG or JPEG up to 2 MB.",
+        ),
+      });
+    } finally {
+      setLogoUploading(false);
+    }
+  };
 
   const languageOptions = useMemo(
     () =>
@@ -102,6 +139,19 @@ export function SystemCard({
             disabled={!loginEnabled}
           />
         </div>
+
+        <FileInput
+          label={t("admin.settings.general.logo.label", "Application Logo")}
+          description={t(
+            "admin.settings.general.logo.description",
+            "Upload a PNG or JPEG image up to 2 MB.",
+          )}
+          accept="image/png,image/jpeg"
+          clearable
+          disabled={!loginEnabled || logoUploading}
+          rightSection={logoUploading ? <span>...</span> : undefined}
+          onChange={(file) => void uploadLogo(file)}
+        />
 
         <div>
           <MultiSelect

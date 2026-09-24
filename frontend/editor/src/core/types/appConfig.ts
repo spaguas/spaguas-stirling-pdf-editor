@@ -4,6 +4,7 @@ export interface AppConfig {
   serverPort?: number;
   frontendUrl?: string;
   appNameNavbar?: string;
+  appLogoUrl?: string;
   languages?: string[];
   defaultLocale?: string;
   enableLogin?: boolean;

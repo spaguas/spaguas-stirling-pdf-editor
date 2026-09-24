@@ -16,10 +16,11 @@ services:
       - ../../stirling/latest/data:/usr/share/tessdata:rw
       - ../../stirling/latest/config:/configs:rw
       - ../../stirling/latest/logs:/logs:rw
+      - ../../customFiles:/app/customFiles:rw
     environment:
-      DISABLE_ADDITIONAL_FEATURES: "true"
-      SECURITY_ENABLELOGIN: "false"
-      SYSTEM_DEFAULTLOCALE: en-US
+      DISABLE_ADDITIONAL_FEATURES: "false"
+      SECURITY_ENABLELOGIN: "true"
+      SYSTEM_DEFAULTLOCALE: pt-BR
       UI_APPNAME: Stirling-PDF
       UI_HOMEDESCRIPTION: Demo site for Stirling-PDF Latest
       UI_APPNAMENAVBAR: Stirling-PDF Latest

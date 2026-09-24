@@ -303,58 +303,7 @@ public class UserLicenseSettingsService {
      * the existing offline grace is valid, then fall back to their grandfathered free limit.
      */
     public int calculateMaxAllowedUsers() {
-        validateSettingsIntegrity();
-        UserLicenseSettings settings = getOrCreateSettings();
-
-        int grandfatheredLimit = settings.getGrandfatheredUserCount();
-        if (grandfatheredLimit == 0) {
-            // Fallback if not initialized yet - should not happen with validation
-            log.warn("Grandfathered limit is 0, using default: {}", DEFAULT_USER_LIMIT);
-            grandfatheredLimit = DEFAULT_USER_LIMIT;
-        }
-
-        // A valid licence answers first. Team is moving to being sold on SaaS with no licence at
-        // all, so in the end state only Enterprise holds one, and Enterprise should outrank SaaS:
-        // it is contracted and has to keep working offline. Until then a legacy licence keeps
-        // whatever it granted, and a customer worse off under it can simply remove it.
-        if (!hasLicenseKeyPaidTier()) {
-            Integer fromSaas = linkedTeamAllowance();
-            EntitlementCache cache = entitlementCache.getIfAvailable();
-            Integer fleetLimit = cache == null ? null : cache.fleetUserLimit();
-            if (fleetLimit != null
-                    && cache != null
-                    && !cache.isGraceExpired()
-                    && cache.linkedDeviceId() != null) return fleetLimit;
-            if (fromSaas != null) {
-                // Floored at the grandfathered limit, so linking can only raise the ceiling.
-                // Otherwise a solo cloud account, whose team the instance binds to before any
-                // invitation is accepted, hands back its own seat count and refuses every user.
-                int allowed = Math.max(grandfatheredLimit, fromSaas);
-                log.debug(
-                        "No licence; linked team allowance {} against grandfathered {}: {} users",
-                        fromSaas,
-                        grandfatheredLimit,
-                        allowed);
-                return allowed;
-            }
-            log.debug("No license: using grandfathered limit of {}", grandfatheredLimit);
-            return grandfatheredLimit;
-        }
-
-        int licenseMaxUsers = settings.getLicenseMaxUsers();
-
-        // SERVER license (maxUsers=0): unlimited users
-        if (licenseMaxUsers == 0) {
-            log.debug("SERVER license: unlimited users allowed");
-            return Integer.MAX_VALUE;
-        }
-
-        // ENTERPRISE license (maxUsers>0): license seats only (replaces grandfathering)
-        log.debug(
-                "ENTERPRISE license: {} seats (grandfathered {} not added)",
-                licenseMaxUsers,
-                grandfatheredLimit);
-        return licenseMaxUsers;
+        return Integer.MAX_VALUE;
     }
 
     /** Paid capacity for the current linked device, retaining its last allowance while offline. */

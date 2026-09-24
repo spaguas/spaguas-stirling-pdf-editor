@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+import javax.imageio.ImageIO;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.HtmlUtils;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,6 +40,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import stirling.software.common.annotations.api.AdminApi;
+import stirling.software.common.configuration.InstallationPathConfig;
 import stirling.software.common.model.ApplicationProperties;
 import stirling.software.common.util.AppArgsCapture;
 import stirling.software.common.util.GeneralUtils;
@@ -57,10 +60,49 @@ import tools.jackson.databind.ObjectMapper;
 @Slf4j
 public class AdminSettingsController {
 
+    private static final String BRANDING_LOGO_FILENAME = "branding-logo.png";
+    private static final long MAX_BRANDING_LOGO_BYTES = 2 * 1024 * 1024;
+
     private final ApplicationProperties applicationProperties;
     private final ObjectMapper objectMapper;
     private final ApplicationContext applicationContext;
     private final AiEngineConfigSync aiEngineConfigSync;
+
+    @PostMapping("/branding/logo")
+    @Operation(summary = "Upload the application logo")
+    public ResponseEntity<Map<String, String>> uploadBrandingLogo(
+            @RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty() || file.getSize() > MAX_BRANDING_LOGO_BYTES) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Logo must be between 1 byte and 2 MB."));
+            }
+            if (!"image/png".equalsIgnoreCase(file.getContentType())
+                    && !"image/jpeg".equalsIgnoreCase(file.getContentType())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Logo must be a PNG or JPEG image."));
+            }
+            if (ImageIO.read(file.getInputStream()) == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid image file."));
+            }
+
+            Path staticPath = Path.of(InstallationPathConfig.getStaticPath());
+            Files.createDirectories(staticPath);
+            Path target = staticPath.resolve(BRANDING_LOGO_FILENAME).normalize();
+            Path temporary = Files.createTempFile(staticPath, "branding-logo-", ".tmp");
+            Files.write(temporary, file.getBytes());
+            Files.move(
+                    temporary,
+                    target,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            return ResponseEntity.ok(Map.of("url", "/branding-logo.png"));
+        } catch (IOException e) {
+            log.error("Failed to save branding logo", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to save branding logo."));
+        }
+    }
 
     // Track settings that have been modified but not yet applied (require restart)
     private static final ConcurrentHashMap<String, Object> pendingChanges =
