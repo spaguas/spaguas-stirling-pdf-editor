@@ -54,6 +54,27 @@ docker-compose -f docker/compose/docker-compose.ultra-lite.yml up --build
 docker-compose -f docker/compose/docker-compose.fat.yml up --build
 ```
 
+### Production on `/editor-pdf`
+
+The single-container production setup binds the app to loopback port `8080` and
+configures Spring to serve it under `/editor-pdf`. From the repository root:
+
+```bash
+docker compose -f docker/compose/docker-compose.production-editor-pdf.yml up -d --build
+```
+
+Include `docker/compose/nginx-editor-pdf.conf` inside the HTTPS `server` block
+of the host Nginx virtual host, then validate and reload Nginx:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+The `proxy_pass` intentionally has no trailing slash, so Nginx preserves the
+`/editor-pdf` prefix required by `SYSTEM_ROOTURIPATH`. The Compose mapping keeps
+port `8080` private to the host; for an Nginx container, put both containers on
+the same Docker network and use `proxy_pass http://stirling-pdf:8080` instead.
+
 
 ## Access Points
 

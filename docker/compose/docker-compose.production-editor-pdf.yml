@@ -1,0 +1,23 @@
+services:
+  stirling-pdf:
+    build:
+      context: ../..
+      dockerfile: docker/embedded/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ../../stirling/latest/data:/usr/share/tessdata:rw
+      - ../../stirling/latest/config:/configs:rw
+      - ../../stirling/latest/logs:/logs:rw
+      - ../../customFiles:/app/customFiles:rw
+    environment:
+      SYSTEM_ROOTURIPATH: /editor-pdf
+      SECURITY_ENABLELOGIN: "true"
+      SYSTEM_DEFAULTLOCALE: pt-BR
+      SYSTEM_MAXFILESIZE: "100"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/editor-pdf/api/v1/info/status | grep -q 'UP'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
