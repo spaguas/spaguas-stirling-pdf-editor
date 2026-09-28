@@ -7,10 +7,10 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
-      - ../../stirling/latest/data:/usr/share/tessdata:rw
-      - ../../stirling/latest/config:/configs:rw
-      - ../../stirling/latest/logs:/logs:rw
-      - ../../customFiles:/app/customFiles:rw
+      - ${STIRLING_DATA_ROOT:-/mnt/apps/stirling-pdf}/data:/usr/share/tessdata:rw
+      - ${STIRLING_DATA_ROOT:-/mnt/apps/stirling-pdf}/config:/configs:rw
+      - ${STIRLING_DATA_ROOT:-/mnt/apps/stirling-pdf}/logs:/logs:rw
+      - ${STIRLING_DATA_ROOT:-/mnt/apps/stirling-pdf}/customFiles:/app/customFiles:rw
     environment:
       SYSTEM_ROOTURIPATH: /editor-pdf
       SECURITY_ENABLELOGIN: "true"

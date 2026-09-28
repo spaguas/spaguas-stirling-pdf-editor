@@ -57,11 +57,34 @@ docker-compose -f docker/compose/docker-compose.fat.yml up --build
 ### Production on `/editor-pdf`
 
 The single-container production setup binds the app to loopback port `8080` and
-configures Spring to serve it under `/editor-pdf`. From the repository root:
+configures Spring to serve it under `/editor-pdf`. Persistent application data
+is stored under `/mnt/apps/stirling-pdf` by default. On the server, create the
+directories and start it from the repository root:
 
 ```bash
+sudo mkdir -p /mnt/apps/stirling-pdf/{data,config,logs,customFiles}
 docker compose -f docker/compose/docker-compose.production-editor-pdf.yml up -d --build
 ```
+
+Set `STIRLING_DATA_ROOT` in the environment or a Compose `.env` file to use a
+different directory. These bind mounts store configuration, logs, tessdata and
+custom files on Alfresco's filesystem, but do not relocate Docker images or the
+container writable layer. Check where Docker actually stores those with:
+
+```bash
+docker info --format 'DockerRootDir={{.DockerRootDir}}'
+df -hT /mnt/apps /mnt/apps/docker
+docker system df
+```
+
+If `DockerRootDir` is not on `/mnt/apps`, configure Docker's daemon `data-root`
+on that filesystem before building/running the image. Preserve any existing
+`/etc/docker/daemon.json` settings, stop Docker before migrating existing data,
+and verify `docker info` and the filesystem with `df` after restarting. Do not
+remove the old Docker data until containers and images are confirmed healthy.
+This host reports overlay mounts at 100% on `/`, so verify the actual Docker
+root and mount backing those overlay directories before assuming the `/mnt/apps`
+path is already in use for Docker storage.
 
 Include `docker/compose/nginx-editor-pdf.conf` inside the HTTPS `server` block
 of the host Nginx virtual host, then validate and reload Nginx:
