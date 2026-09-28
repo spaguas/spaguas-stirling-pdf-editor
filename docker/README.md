@@ -82,21 +82,37 @@ on that filesystem before building/running the image. Preserve any existing
 `/etc/docker/daemon.json` settings, stop Docker before migrating existing data,
 and verify `docker info` and the filesystem with `df` after restarting. Do not
 remove the old Docker data until containers and images are confirmed healthy.
-This host reports overlay mounts at 100% on `/`, so verify the actual Docker
-root and mount backing those overlay directories before assuming the `/mnt/apps`
-path is already in use for Docker storage.
+If overlay mounts appear to use a different filesystem from `DockerRootDir`,
+inspect their mount sources before assuming which filesystem holds the image and
+container layers.
 
-Include `docker/compose/nginx-editor-pdf.conf` inside the HTTPS `server` block
-of the host Nginx virtual host, then validate and reload Nginx:
+Install the Nginx snippet and add its `include` inside the existing HTTPS
+`server` block (not inside another `location`) of the host virtual host:
+
+```bash
+sudo install -m 644 docker/compose/nginx-editor-pdf.conf /etc/nginx/snippets/stirling-editor-pdf.conf
+```
+
+Add this line inside the HTTPS `server { ... }` block:
+
+```nginx
+include /etc/nginx/snippets/stirling-editor-pdf.conf;
+```
+
+Then validate/reload Nginx and test the upstream and public URL:
 
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
+curl -fsS http://127.0.0.1:8080/editor-pdf/api/v1/info/status
+curl -I https://YOUR-DOMAIN/editor-pdf/
 ```
 
-The `proxy_pass` intentionally has no trailing slash, so Nginx preserves the
-`/editor-pdf` prefix required by `SYSTEM_ROOTURIPATH`. The Compose mapping keeps
-port `8080` private to the host; for an Nginx container, put both containers on
-the same Docker network and use `proxy_pass http://stirling-pdf:8080` instead.
+The `proxy_pass` intentionally has no URI or trailing slash, so Nginx preserves
+the `/editor-pdf` prefix required by `SYSTEM_ROOTURIPATH`. Do not replace it
+with `proxy_pass http://127.0.0.1:8080/;`, which strips the prefix. The Compose
+mapping keeps port `8080` private to the host; for an Nginx container, put both
+containers on the same Docker network and use `proxy_pass http://stirling-pdf:8080`
+instead.
 
 
 ## Access Points
