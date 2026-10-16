@@ -6,6 +6,15 @@ vars:
   ENGINE_DIR: docker/engine
 
 tasks:
+  check:
+    desc: "Validate production Docker configurations"
+    env:
+      STIRLING_BUILD_PROXY: http://proxy.invalid:80
+      STIRLING_GRADLE_PROXY_FILE: '{{.ROOT_DIR}}/docker/compose/gradle-proxy.properties.example'
+    cmds:
+      - docker compose -f {{.COMPOSE_DIR}}/docker-compose.production-editor-pdf.yml config --quiet
+      - docker compose -f {{.COMPOSE_DIR}}/docker-compose.production-editor-pdf.yml -f {{.COMPOSE_DIR}}/docker-compose.build-proxy.yml config --quiet
+
   build:
     desc: "Build standard Docker image"
     cmds:

@@ -51,7 +51,8 @@ COPY app/common/build.gradle                app/common/
 COPY app/proprietary/build.gradle           app/proprietary/
 
 # Use system gradle instead of gradlew to avoid SSL issues downloading gradle distribution on emulated arm64
-RUN gradle dependencies --no-daemon || true
+RUN --mount=type=secret,id=gradle_properties,target=/home/gradle/.gradle/gradle.properties,uid=1000,gid=1000 \
+    gradle dependencies --no-daemon || true
 
 COPY . .
 
@@ -75,7 +76,8 @@ ARG VITE_SAAS_API_URL=""
 ARG TARGETARCH
 # Exported only when non-empty: Vite reads process.env ahead of the .env files, so exporting an
 # empty value would blank the committed default rather than fall back to it.
-RUN JPDFIUM_PLATFORM="$([ "$TARGETARCH" = arm64 ] && echo linux-arm64 || echo linux-x64)" && \
+RUN --mount=type=secret,id=gradle_properties,target=/home/gradle/.gradle/gradle.properties,uid=1000,gid=1000 \
+    JPDFIUM_PLATFORM="$([ "$TARGETARCH" = arm64 ] && echo linux-arm64 || echo linux-x64)" && \
     if [ -n "${VITE_SUPABASE_URL}" ]; then export VITE_SUPABASE_URL="${VITE_SUPABASE_URL}"; fi; \
     if [ -n "${VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY}" ]; then export VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY="${VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY}"; fi; \
     if [ -n "${VITE_SAAS_API_URL}" ]; then export VITE_SAAS_API_URL="${VITE_SAAS_API_URL}"; fi; \

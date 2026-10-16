@@ -1,11 +1,12 @@
 import { clearStoredToken, getStoredToken } from "@app/auth";
+import { getApiBaseUrl } from "@app/services/apiClientConfig";
 
 /**
  * Transport config for {@code apiClient.local} — the flavor seam behind "this
  * instance's backend".
  *
- * Self-hosted (this base): same-origin (the local Stirling backend, vite-proxied
- * to :8080 in dev), authenticated with the Spring admin bearer.
+ * Self-hosted (this base): the editor's configured API base, including its
+ * deployment subpath, authenticated with the Spring admin bearer.
  *
  * The SaaS build shadows this file: there is no separate local instance, so
  * {@code apiClient.local} targets the one SaaS backend (VITE_API_BASE_URL, via
@@ -13,7 +14,7 @@ import { clearStoredToken, getStoredToken } from "@app/auth";
  * {@code apiClient.saas}. There is no same-origin + Spring path in SaaS.
  */
 export function localBaseUrl(): string {
-  return "";
+  return getApiBaseUrl().replace(/\/+$/, "");
 }
 
 /** Auth header for apiClient.local — the Spring admin bearer, when present. */

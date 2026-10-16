@@ -29,6 +29,7 @@ import {
   SaasUnconfiguredError,
 } from "@app/portal/api/http";
 import { resetPortalSaasSessionState } from "@app/portal/auth/portalSaasSession";
+import { fetchUsers } from "@app/portal/api/users";
 
 const fetchMock = vi.fn();
 
@@ -145,6 +146,76 @@ describe("apiClient.saas", () => {
 });
 
 describe("apiClient.local", () => {
+  it.each(["json", "form", "multipart", "blob"] as const)(
+    "preserves the runtime deployment subpath for %s requests",
+    async (format) => {
+      vi.stubEnv("VITE_API_BASE_URL", "https://unused.example/");
+      vi.stubGlobal("STIRLING_PDF_API_BASE_URL", "/editor-pdf/");
+      getStoredTokenMock.mockReturnValue("spring_tok");
+      fetchMock.mockResolvedValue(ok({ users: [] }));
+      const endpoint = "/api/v1/proprietary/ui-data/admin-settings";
+
+      if (format === "form") {
+        await apiClient.local.form(endpoint, { username: "admin" });
+      } else if (format === "multipart") {
+        await apiClient.local.multipart(endpoint, new FormData());
+      } else {
+        await apiClient.local[format](endpoint);
+      }
+
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe(`/editor-pdf${endpoint}`);
+      expect(init.headers.Authorization).toBe("Bearer spring_tok");
+    },
+  );
+
+  it("loads the member roster without an API route at the domain root", async () => {
+    vi.stubGlobal("STIRLING_PDF_API_BASE_URL", "/editor-pdf");
+    getStoredTokenMock.mockReturnValue("spring_tok");
+    fetchMock.mockImplementation((url: string) => {
+      if (url !== "/editor-pdf/api/v1/proprietary/ui-data/admin-settings") {
+        return Promise.resolve(new Response(null, { status: 404 }));
+      }
+      return Promise.resolve(
+        ok({
+          users: [
+            {
+              id: 1,
+              username: "admin",
+              rolesAsString: "ROLE_ADMIN",
+              enabled: true,
+              portalAccess: true,
+            },
+          ],
+          currentUsername: "admin",
+          totalUsers: 1,
+          maxAllowedUsers: 5,
+        }),
+      );
+    });
+
+    const roster = await fetchUsers("free");
+
+    expect(roster.members).toEqual([
+      expect.objectContaining({ id: "1", username: "admin", isSelf: true }),
+    ]);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe(
+      "Bearer spring_tok",
+    );
+  });
+
+  it("uses the configured backend when there is no runtime override", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://server.example/editor-pdf/");
+    fetchMock.mockResolvedValue(ok({ users: [] }));
+
+    await apiClient.local.json("/api/v1/proprietary/ui-data/admin-settings");
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://server.example/editor-pdf/api/v1/proprietary/ui-data/admin-settings",
+    );
+  });
+
   it("attaches the Spring admin bearer and stays same-origin", async () => {
     getStoredTokenMock.mockReturnValue("spring_tok");
     fetchMock.mockResolvedValue(ok({ linked: false }));

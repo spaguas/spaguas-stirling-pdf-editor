@@ -19,11 +19,11 @@ services:
       - ../../customFiles:/app/customFiles:rw
     environment:
       DISABLE_ADDITIONAL_FEATURES: "false"
-      SECURITY_ENABLELOGIN: "true"
+      SECURITY_ENABLELOGIN: "false"
       SYSTEM_DEFAULTLOCALE: pt-BR
-      UI_APPNAME: Stirling-PDF
-      UI_HOMEDESCRIPTION: Demo site for Stirling-PDF Latest
-      UI_APPNAMENAVBAR: Stirling-PDF Latest
+      UI_APPNAME: Editor PDF
+      UI_HOMEDESCRIPTION: SP-ÁGUAS - Agência de Águas e Saneamento do Estado de São Paulo
+      UI_APPNAMENAVBAR: Editor-PDF
       SYSTEM_MAXFILESIZE: "100"
       METRICS_ENABLED: "true"
       SYSTEM_GOOGLEVISIBILITY: "true"

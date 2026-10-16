@@ -114,6 +114,80 @@ mapping keeps port `8080` private to the host; for an Nginx container, put both
 containers on the same Docker network and use `proxy_pass http://stirling-pdf:8080`
 instead.
 
+#### Portal API routing under `/editor-pdf`
+
+The editor and its portal share `getApiBaseUrl()` from
+`@app/services/apiClientConfig`. Spring injects the deployment's context path
+through `window.STIRLING_PDF_API_BASE_URL`; the portal normalizes its trailing
+slash before joining API paths. This applies to JSON, form, multipart, and
+binary requests, including member and team management.
+
+Publish the updated `frontend/editor/src/portal/api/localBackend.ts` source and
+rebuild the application image using the production build commands below. A
+container restart alone does not update the embedded frontend bundle.
+
+After the new image is healthy:
+
+1. Reload the browser with its cache disabled and sign in with the current
+   password. A password change ends the previous session.
+2. Open Members and inspect the browser's Network panel. Its roster request
+   must target `/editor-pdf/api/v1/proprietary/ui-data/admin-settings` and
+   return HTTP 200 with JSON.
+3. Remove the temporary root `location /api/v1/` that proxies to Stirling, or
+   its `stirling-editor-pdf-api-compat.conf` include, from this domain's
+   `server` block. Preserve any routes belonging to other applications.
+4. Run `sudo nginx -t && sudo systemctl reload nginx`, then reload Members
+   and verify the roster, teams, and member actions again.
+
+The permanent Nginx configuration needs only
+`include /etc/nginx/snippets/stirling-editor-pdf.conf;` for this application.
+The `/api/v1/` root path remains available for the domain's other applications.
+
+#### Building behind an outbound proxy
+
+For a server that accesses the internet through `http://10.1.6.20:80`, use the
+optional build override below. Docker passes the proxy to command-line download
+tools; Gradle also needs Java proxy properties. The private properties file is
+mounted only during the two Gradle build instructions using a BuildKit secret.
+
+From the repository root, prepare the file outside the Docker build context:
+
+```bash
+mkdir -p "$HOME/.config/stirling-pdf"
+install -m 600 docker/compose/gradle-proxy.properties.example \
+  "$HOME/.config/stirling-pdf/gradle-proxy.properties"
+export STIRLING_BUILD_PROXY=http://10.1.6.20:80
+export STIRLING_GRADLE_PROXY_FILE="$HOME/.config/stirling-pdf/gradle-proxy.properties"
+```
+
+The example assumes the proxy does not require authentication. If authentication
+is required, configure the HTTP and HTTPS `systemProp.*.proxyUser` and
+`systemProp.*.proxyPassword` entries in the private file. Do not commit credentials.
+For another proxy, update both the exported URL and the host/port in that file.
+Gradle's `proxyHost` values contain only the host, without a scheme or port.
+
+Validate, build, and start the application:
+
+```bash
+docker compose \
+  -f docker/compose/docker-compose.production-editor-pdf.yml \
+  -f docker/compose/docker-compose.build-proxy.yml config --quiet
+docker compose --progress plain \
+  -f docker/compose/docker-compose.production-editor-pdf.yml \
+  -f docker/compose/docker-compose.build-proxy.yml build stirling-pdf
+docker compose -f docker/compose/docker-compose.production-editor-pdf.yml \
+  up -d --no-build --wait --wait-timeout 300
+curl -fsS http://127.0.0.1:8080/editor-pdf/api/v1/info/status
+```
+
+The override configures outbound access during the build. The application still
+uses the existing Nginx snippet for inbound requests on `/editor-pdf`. It does
+not configure the Docker daemon's image pulls; if those fail, the daemon or
+builder needs its own proxy configuration. A `407 Proxy Authentication Required`
+response means the proxy requires credentials; a Java certificate trust error
+requires trusting the organization's CA in the build environment.
+
+Run `task docker:check` to validate both production Compose configurations.
 
 ## Access Points
 

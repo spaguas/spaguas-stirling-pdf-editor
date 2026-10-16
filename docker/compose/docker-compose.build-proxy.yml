@@ -1,0 +1,13 @@
+services:
+  stirling-pdf:
+    build:
+      args:
+        HTTP_PROXY: ${STIRLING_BUILD_PROXY:?Set STIRLING_BUILD_PROXY to the outbound proxy URL}
+        HTTPS_PROXY: ${STIRLING_BUILD_PROXY:?Set STIRLING_BUILD_PROXY to the outbound proxy URL}
+        NO_PROXY: ${STIRLING_BUILD_NO_PROXY:-localhost,127.0.0.1,::1}
+      secrets:
+        - gradle_properties
+
+secrets:
+  gradle_properties:
+    file: ${STIRLING_GRADLE_PROXY_FILE:?Set STIRLING_GRADLE_PROXY_FILE to a private Gradle properties file}
