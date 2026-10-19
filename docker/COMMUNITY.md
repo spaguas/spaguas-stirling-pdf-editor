@@ -25,8 +25,12 @@ if [ ! -f "$COMMUNITY_BOOTSTRAP_PASSWORD_FILE" ]; then
   openssl rand -base64 24 > "$COMMUNITY_BOOTSTRAP_PASSWORD_FILE"
 fi
 chmod 600 "$COMMUNITY_BOOTSTRAP_PASSWORD_FILE"
+# A JVM executa com UID/GID 1000 na imagem padrão; ajuste se usar outro PUID/PGID.
+chown 1000:1000 "$COMMUNITY_BOOTSTRAP_PASSWORD_FILE"
 ```
 
+Execute o `chown` como root (ou com `sudo`). Secrets baseados em arquivo preservam
+as permissões do host; `uid`/`mode` no YAML não substituem esse ajuste no Compose.
 O arquivo é montado como secret do Compose e lido pelo Spring Config Tree. A senha não
 é um argumento de build. Ela só cria o administrador `admin` em um banco vazio; depois
 disso não altera nenhuma conta. Para instalação nova, leia-a localmente no servidor com
@@ -35,6 +39,18 @@ Não envie essa senha em chamados ou logs.
 
 Defina `STIRLING_DATA_ROOT` com o mesmo valor da instalação atual. O padrão do Compose
 é `/mnt/apps/stirling-pdf`. Não aponte para outro diretório durante a migração.
+Confira o volume de configuração da instância existente antes de definir a variável:
+
+```bash
+cid=$(docker compose -f docker/compose/docker-compose.production-editor-pdf.yml ps -q stirling-pdf)
+test -n "$cid"
+docker inspect --format '{{range .Mounts}}{{if eq .Destination "/configs"}}{{.Source}}{{end}}{{end}}' "$cid"
+```
+
+O caminho exibido deve corresponder a `$STIRLING_DATA_ROOT/config`. Se for diferente,
+ajuste `STIRLING_DATA_ROOT` antes de continuar. Em uma instalação nova, não há container a consultar.
+Reexporte as variáveis documentadas a cada sessão do terminal; o Compose não lê `.env.local`
+automaticamente. Não grave senhas no `.env` versionado do projeto.
 
 ```bash
 export STIRLING_DATA_ROOT=/mnt/apps/stirling-pdf
@@ -86,6 +102,8 @@ chmod 700 "$COMMUNITY_LEGACY_BACKUP_DIR"
 ls -l "$STIRLING_DATA_ROOT/config/"*.mv.db
 cp -p "$STIRLING_DATA_ROOT/config/stirling-pdf-DB-2.3.232.mv.db" "$COMMUNITY_LEGACY_BACKUP_DIR/"
 export COMMUNITY_LEGACY_DB_NAME=stirling-pdf-DB-2.3.232
+chown 1000:1000 "$COMMUNITY_LEGACY_BACKUP_DIR" \
+  "$COMMUNITY_LEGACY_BACKUP_DIR/$COMMUNITY_LEGACY_DB_NAME.mv.db"
 ```
 
 Guarde também um backup completo de `config` e dos demais volumes conforme seu procedimento

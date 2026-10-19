@@ -60,7 +60,7 @@ class CommunityHttpTest {
 
     @RestController
     static class Probe {
-        @GetMapping("/api/v1/test/process")
+        @GetMapping({"/api/v1/test/process", "/api/v1/info/health"})
         String process() {
             return "processed";
         }
@@ -248,6 +248,52 @@ class CommunityHttpTest {
     }
 
     @Test
+    void processingAccessDoesNotGrantServerAdministration() throws Exception {
+        Browser admin = admin();
+        String team = team(admin, "Processing only", true, true);
+        create(admin, "limitedadmin", team);
+        Browser worker = member("limitedadmin");
+        assertThat(worker.pdf().statusCode()).isEqualTo(200);
+        assertThat(
+                        worker.client
+                                .send(
+                                        HttpRequest.newBuilder(
+                                                        URI.create(base() + "/api/v1/info/health"))
+                                                .build(),
+                                        HttpResponse.BodyHandlers.ofString())
+                                .statusCode())
+                .isEqualTo(403);
+        assertThat(
+                        admin.client
+                                .send(
+                                        HttpRequest.newBuilder(
+                                                        URI.create(base() + "/api/v1/info/health"))
+                                                .build(),
+                                        HttpResponse.BodyHandlers.ofString())
+                                .statusCode())
+                .isEqualTo(200);
+        String csrf =
+                worker.cookies.getCookieStore().getCookies().stream()
+                        .filter(c -> c.getName().equals("XSRF-TOKEN"))
+                        .findFirst()
+                        .orElseThrow()
+                        .getValue();
+        assertThat(
+                        worker.client
+                                .send(
+                                        HttpRequest.newBuilder(
+                                                        URI.create(
+                                                                base()
+                                                                        + "/api/v1/settings/update-enable-analytics"))
+                                                .header("X-XSRF-TOKEN", csrf)
+                                                .POST(HttpRequest.BodyPublishers.noBody())
+                                                .build(),
+                                        HttpResponse.BodyHandlers.ofString())
+                                .statusCode())
+                .isEqualTo(403);
+    }
+
+    @Test
     void lastAdministratorAndPasswordRulesAreProtected() throws Exception {
         Browser admin = admin();
         String id = store.byUsername("admin").orElseThrow().id();
@@ -354,20 +400,25 @@ class CommunityHttpTest {
                             new org.springframework.jdbc.datasource.SingleConnectionDataSource(
                                     connection, true));
             source.execute(
-                    "CREATE TABLE users (user_id BIGINT PRIMARY KEY,username VARCHAR(64),password VARCHAR(200),enabled BOOLEAN,team_id BIGINT)");
+                    "CREATE TABLE users (user_id BIGINT PRIMARY KEY,username VARCHAR(64),password VARCHAR(200),enabled BOOLEAN,team_id BIGINT,authenticationtype VARCHAR(20))");
             source.execute("CREATE TABLE authorities (user_id BIGINT,authority VARCHAR(64))");
             source.execute("CREATE TABLE teams (team_id BIGINT PRIMARY KEY,name VARCHAR(100))");
             source.execute(
                     "CREATE TABLE team_memberships (team_id BIGINT,user_id BIGINT,role VARCHAR(32))");
             source.update("INSERT INTO teams VALUES (10,?)", teamName);
             source.update(
-                    "INSERT INTO users VALUES (1,'OldAdmin',?,TRUE,10)", encoder.encode(INITIAL));
+                    "INSERT INTO users VALUES (1,'OldAdmin',?,TRUE,10,'web')",
+                    encoder.encode(INITIAL));
             source.update(
-                    "INSERT INTO users VALUES (2,'OldMember',?,TRUE,10)", encoder.encode(INITIAL));
-            source.update("INSERT INTO users VALUES (3,'SsoAccount',NULL,TRUE,NULL)");
-            source.update("INSERT INTO users VALUES (4,'ROLE_INTERNAL_API_USER',NULL,TRUE,NULL)");
+                    "INSERT INTO users VALUES (2,'OldMember',?,TRUE,10,'web')",
+                    encoder.encode(INITIAL));
             source.update(
-                    "INSERT INTO authorities VALUES (1,'ROLE_ADMIN'),(2,'ROLE_USER'),(3,'ROLE_USER'),(4,'ROLE_INTERNAL_API_USER')");
+                    "INSERT INTO users VALUES (3,'SsoAccount',?,TRUE,NULL,'oauth2')",
+                    encoder.encode(INITIAL));
+            source.update(
+                    "INSERT INTO users VALUES (4,'STIRLING-PDF-BACKEND-API-USER',NULL,TRUE,NULL,'web')");
+            source.update(
+                    "INSERT INTO authorities VALUES (1,'ROLE_ADMIN'),(2,'ROLE_USER'),(3,'ROLE_USER'),(4,'STIRLING-PDF-BACKEND-API-USER')");
             source.update("INSERT INTO team_memberships VALUES (10,2,'LEADER')");
         }
         return url;

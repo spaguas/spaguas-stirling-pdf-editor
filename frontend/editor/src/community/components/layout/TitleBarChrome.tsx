@@ -11,7 +11,7 @@ export function TitleBarChrome({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   return (
-    <>
+    <div className="community-shell">
       <header className="community-titlebar">
         <Text fw={600}>Stirling PDF Community</Text>
         <Group gap="xs">
@@ -25,6 +25,6 @@ export function TitleBarChrome({ children }: { children: ReactNode }) {
         </Group>
       </header>
       {children}
-    </>
+    </div>
   );
 }

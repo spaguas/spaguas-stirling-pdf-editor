@@ -7,7 +7,7 @@ import { communityRequest, type CommunitySession } from "@app/communityApi";
 
 export type { AccountData, LoginPageData };
 
-async function unsupported(): Promise<never> {
+async function unsupported(..._arguments: unknown[]): Promise<never> {
   throw new Error("This account operation is unavailable in Community");
 }
 async function changePassword(
@@ -45,7 +45,14 @@ export const accountService = {
     };
   },
   changePassword,
-  changePasswordOnLogin: changePassword,
+  async changePasswordOnLogin(
+    currentPassword: string,
+    newPassword: string,
+    confirmation: string,
+  ) {
+    if (newPassword !== confirmation) throw new Error("Passwords do not match");
+    await changePassword(currentPassword, newPassword);
+  },
   changeUsername: unsupported,
   requestMfaSetup: unsupported,
   enableMfa: unsupported,

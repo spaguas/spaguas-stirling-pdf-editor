@@ -67,8 +67,18 @@ public class CommunitySecurity {
                                                 "/api/v1/config/**",
                                                 "/api/v1/ui-data/footer-info")
                                         .permitAll()
-                                        .requestMatchers("/api/v1/settings/update-enable-analytics", "/api/v1/info/**", "/actuator/**")
-                                        .access((authentication, context) -> new AuthorizationDecision(accounts.isCurrentUserAdmin() && accounts.canProcessPdf(authentication.get().getName())))
+                                        .requestMatchers(
+                                                "/api/v1/settings/update-enable-analytics",
+                                                "/api/v1/info/**",
+                                                "/actuator/**")
+                                        .access(
+                                                (authentication, context) ->
+                                                        new AuthorizationDecision(
+                                                                accounts.isCurrentUserAdmin()
+                                                                        && accounts.canProcessPdf(
+                                                                                authentication
+                                                                                        .get()
+                                                                                        .getName())))
                                         .requestMatchers("/api/v1/community/**")
                                         .authenticated()
                                         .requestMatchers("/api/**")

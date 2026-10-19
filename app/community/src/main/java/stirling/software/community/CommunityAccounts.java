@@ -208,7 +208,14 @@ public class CommunityAccounts implements UserDetailsService, UserServiceInterfa
     public static String validUsername(String username) {
         String normalized = CommunityStore.normalize(username);
         if (!normalized.matches("[a-z0-9][a-z0-9._@+-]{2,63}")
-                || java.util.Set.of("anonymoususer", "community-internal").contains(normalized)) {
+                || java.util.Set.of(
+                                "anonymoususer",
+                                "community-internal",
+                                CommunityStore.normalize(
+                                        stirling.software.common.model.enumeration.Role
+                                                .INTERNAL_API_USER
+                                                .getRoleId()))
+                        .contains(normalized)) {
             throw problem(
                     HttpStatus.BAD_REQUEST,
                     "Username must contain 3 to 64 letters, digits or . _ @ + -");

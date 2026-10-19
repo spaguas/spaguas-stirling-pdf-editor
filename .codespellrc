@@ -1,0 +1,3 @@
+[codespell]
+# The deployment guide is Portuguese; the English dictionary flags valid Portuguese words.
+skip = docker/COMMUNITY.md

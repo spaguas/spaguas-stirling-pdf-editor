@@ -2,11 +2,12 @@
 
 This directory contains the organized Docker configurations for the split frontend/backend architecture.
 
-## Community: equipes, usuários e permissões
+## Community accounts, teams and permissions
 
-Para executar sem dependência comercial de contas/equipes, use o modo `community`.
-O [guia Community](COMMUNITY.md) contém build, migração do banco H2, Nginx em `/editor-pdf`,
-validação e rollback. A configuração de produção padrão continua selecionando a edição original.
+Use the `community` flavor for independent local accounts, teams and permissions.
+The [Community deployment guide (Portuguese)](COMMUNITY.md) covers the image build,
+H2 migration, Nginx at `/editor-pdf`, validation and rollback. The default production
+configuration continues to select the original edition.
 
 ## Using Taskfile (Recommended)
 

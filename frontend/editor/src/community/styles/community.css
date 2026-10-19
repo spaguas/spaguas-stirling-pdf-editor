@@ -37,3 +37,20 @@
   border-bottom: 1px solid var(--c-border);
   text-align: start;
 }
+
+.community-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100dvh;
+}
+
+.community-shell > .app-frame {
+  min-height: 0;
+  height: 100%;
+}
+
+@media (max-width: 48em) {
+  .community-titlebar {
+    flex-wrap: wrap;
+  }
+}

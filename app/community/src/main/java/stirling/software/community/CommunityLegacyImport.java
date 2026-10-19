@@ -77,16 +77,25 @@ public class CommunityLegacyImport {
             Map<String, CommunityPrincipal> users = new LinkedHashMap<>();
             Map<String, String> primaryTeams = new HashMap<>();
             Set<String> usernames = new HashSet<>();
-            boolean hasTeam = columns(connection, tables.get("users")).contains("team_id");
+            Set<String> userColumns = columns(connection, tables.get("users"));
+            boolean hasTeam = userColumns.contains("team_id");
+            boolean hasAuthenticationType = userColumns.contains("authenticationtype");
             legacy.query(
                     "SELECT user_id,username,password,enabled,"
                             + (hasTeam ? "team_id" : "NULL")
+                            + ","
+                            + (hasAuthenticationType ? "authenticationtype" : "'web'")
                             + " FROM "
                             + usersTable,
                     rs -> {
                         String oldId = rs.getString(1);
                         Set<String> userRoles = roles.getOrDefault(oldId, Set.of());
-                        if (userRoles.contains("ROLE_INTERNAL_API_USER")) {
+                        String internalName =
+                                stirling.software.common.model.enumeration.Role.INTERNAL_API_USER
+                                        .getRoleId();
+                        if (userRoles.contains(internalName)
+                                || userRoles.contains("ROLE_INTERNAL_API_USER")
+                                || internalName.equalsIgnoreCase(rs.getString(2))) {
                             return;
                         }
                         String username = CommunityAccounts.validUsername(rs.getString(2));
@@ -106,7 +115,11 @@ public class CommunityLegacyImport {
                                         || (userRoles.contains("ROLE_USER")
                                                 && !userRoles.contains("ROLE_WEB_ONLY_USER")
                                                 && !userRoles.contains("ROLE_DEMO_USER"));
-                        boolean enabled = rs.getBoolean(4) && validHash && supported;
+                        boolean enabled =
+                                rs.getBoolean(4)
+                                        && validHash
+                                        && supported
+                                        && "web".equalsIgnoreCase(rs.getString(6));
                         users.put(
                                 oldId,
                                 new CommunityPrincipal(
