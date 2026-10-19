@@ -1,0 +1,18 @@
+services:
+  stirling-pdf:
+    image: stirling-pdf-community:local
+    build:
+      args:
+        STIRLING_FLAVOR: community
+        BUILD_PORTAL: "false"
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configtree:/run/secrets/
+      COMMUNITY_DATA_DIRECTORY: /configs/community
+      COMMUNITY_INITIAL_ADMIN_USERNAME: ${COMMUNITY_INITIAL_ADMIN_USERNAME:-admin}
+    secrets:
+      - source: community_bootstrap_password
+        target: community.initial-admin-password
+
+secrets:
+  community_bootstrap_password:
+    file: ${COMMUNITY_BOOTSTRAP_PASSWORD_FILE:?Set COMMUNITY_BOOTSTRAP_PASSWORD_FILE to a private bootstrap password file}

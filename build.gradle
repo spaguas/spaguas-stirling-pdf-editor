@@ -480,7 +480,11 @@ subprojects {
 
         tasks.named("forkedSpringBootRun") {
             dependsOn(":common:jar")
-            dependsOn(":proprietary:jar")
+            if (!gradle.ext.enableCommunity) {
+                dependsOn(":proprietary:jar")
+            } else {
+                dependsOn(":community:jar")
+            }
         }
 
         tasks.register("copySwaggerDoc", Copy) {
@@ -676,7 +680,7 @@ repositories {
 dependencies {
     implementation project(':stirling-pdf')
     implementation project(':common')
-    if (rootProject.ext.isSecurityDisabled()) {
+    if (!gradle.ext.enableCommunity && rootProject.ext.isSecurityDisabled()) {
         implementation project(':proprietary')
     }
     rootProject.ext.getEnv()

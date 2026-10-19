@@ -215,16 +215,17 @@ public class ConfigController {
 
             // Extract values from ApplicationProperties
             configData.put("appNameNavbar", applicationProperties.getUi().getAppNameNavbar());
-                    java.nio.file.Path brandingLogo =
-                        java.nio.file.Path.of(
+            java.nio.file.Path brandingLogo =
+                    java.nio.file.Path.of(
                             stirling.software.common.configuration.InstallationPathConfig
-                                .getStaticPath(),
+                                    .getStaticPath(),
                             "branding-logo.png");
-                    configData.put(
-                        "appLogoUrl",
-                        java.nio.file.Files.exists(brandingLogo)
+            configData.put(
+                    "appLogoUrl",
+                    java.nio.file.Files.exists(brandingLogo)
                             ? "/branding-logo.png?v="
-                                + java.nio.file.Files.getLastModifiedTime(brandingLogo).toMillis()
+                                    + java.nio.file.Files.getLastModifiedTime(brandingLogo)
+                                            .toMillis()
                             : null);
             configData.put("languages", applicationProperties.getUi().getLanguages());
             configData.put("defaultLocale", applicationProperties.getSystem().getDefaultLocale());

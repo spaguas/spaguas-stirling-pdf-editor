@@ -1,0 +1,39 @@
+.community-auth {
+  display: grid;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  place-items: center;
+  background: var(--c-bg);
+}
+
+.community-auth-card {
+  width: min(100%, 30rem);
+  padding: 2rem;
+  background: var(--c-surface);
+}
+
+.community-titlebar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.community-table-wrap {
+  overflow-x: auto;
+}
+
+.community-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.community-table th,
+.community-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--c-border);
+  text-align: start;
+}

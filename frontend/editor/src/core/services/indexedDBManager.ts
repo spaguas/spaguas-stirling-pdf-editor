@@ -4,6 +4,8 @@
  * Prevents race conditions and duplicate schema upgrades
  */
 
+import { browserDatabaseName } from "@app/services/browserDatabaseName";
+
 export interface DatabaseConfig {
   name: string;
   version: number;
@@ -42,6 +44,7 @@ class IndexedDBManager {
    * Open or get existing database connection
    */
   async openDatabase(config: DatabaseConfig): Promise<IDBDatabase> {
+    config = { ...config, name: browserDatabaseName(config.name) };
     const existingDb = this.databases.get(config.name);
     if (existingDb) {
       return existingDb;
@@ -352,6 +355,7 @@ class IndexedDBManager {
    * Get database connection (must be already opened)
    */
   getDatabase(name: string): IDBDatabase | null {
+    name = browserDatabaseName(name);
     return this.databases.get(name) || null;
   }
 
@@ -359,6 +363,7 @@ class IndexedDBManager {
    * Close database connection
    */
   closeDatabase(name: string): void {
+    name = browserDatabaseName(name);
     const db = this.databases.get(name);
     if (db) {
       db.close();
@@ -383,6 +388,7 @@ class IndexedDBManager {
    * Delete database completely
    */
   async deleteDatabase(name: string): Promise<void> {
+    name = browserDatabaseName(name);
     // Close connection if open
     this.closeDatabase(name);
 
@@ -428,6 +434,7 @@ class IndexedDBManager {
    * Check if a database exists and what version it is
    */
   async getDatabaseVersion(name: string): Promise<number | null> {
+    name = browserDatabaseName(name);
     return new Promise((resolve) => {
       // This probe runs BEFORE the guarded open, and a versionless open can be
       // delayed indefinitely by another tab mid-versionchange. Unknown after the

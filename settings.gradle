@@ -53,9 +53,14 @@ def stirlingFlavor = lookupEnvOrProperty('STIRLING_FLAVOR')?.toLowerCase()
 
 boolean disableAdditional
 boolean enableSaas
+boolean enableCommunity = stirlingFlavor == 'community'
 
 if (stirlingFlavor != null && !stirlingFlavor.isEmpty()) {
     switch (stirlingFlavor) {
+        case 'community':
+            disableAdditional = true
+            enableSaas = false
+            break
         case 'core':
             disableAdditional = true
             enableSaas = false
@@ -70,7 +75,7 @@ if (stirlingFlavor != null && !stirlingFlavor.isEmpty()) {
             break
         default:
             throw new GradleException(
-                "Unknown STIRLING_FLAVOR='${stirlingFlavor}'. Expected one of: core, proprietary, saas.")
+                "Unknown STIRLING_FLAVOR='${stirlingFlavor}'. Expected one of: core, community, proprietary, saas.")
     }
 } else {
     disableAdditional = asBool(lookupEnvOrProperty('DISABLE_ADDITIONAL_FEATURES'))
@@ -85,12 +90,21 @@ if (enableSaas && disableAdditional) {
 
 gradle.ext.disableAdditional = disableAdditional
 gradle.ext.enableSaas = enableSaas
+gradle.ext.enableCommunity = enableCommunity
 
-include 'stirling-pdf', 'common', 'proprietary'
+include 'stirling-pdf', 'common'
 
 project(':stirling-pdf').projectDir = file('app/core')
 project(':common'      ).projectDir = file('app/common')
-project(':proprietary' ).projectDir = file('app/proprietary')
+if (!enableCommunity) {
+    include 'proprietary'
+    project(':proprietary').projectDir = file('app/proprietary')
+}
+
+if (enableCommunity) {
+    include 'community'
+    project(':community').projectDir = file('app/community')
+}
 
 if (enableSaas) {
     include 'saas'

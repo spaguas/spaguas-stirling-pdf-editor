@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@app/*": ["./src/community/*", "./src/core/*"],
+      "@core/*": ["./src/core/*"]
+    }
+  },
+  "include": ["src/community", "src/core", "src/index.tsx", "src/global.d.ts"],
+  "exclude": [
+    "src/proprietary",
+    "src/portal",
+    "src/cloud",
+    "src/desktop",
+    "src/saas",
+    "src/portal-saas",
+    "src/prototypes"
+  ]
+}

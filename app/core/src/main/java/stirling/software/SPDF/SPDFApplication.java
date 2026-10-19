@@ -34,6 +34,7 @@ import stirling.software.common.model.ApplicationProperties;
         scanBasePackages = {
             "stirling.software.SPDF",
             "stirling.software.common",
+            "stirling.software.community",
             "stirling.software.proprietary",
             "stirling.software.saas"
         })

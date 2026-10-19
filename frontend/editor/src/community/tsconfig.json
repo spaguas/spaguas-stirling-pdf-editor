@@ -1,0 +1,4 @@
+{
+  "extends": "../../tsconfig.community.vite.json",
+  "include": ["../global.d.ts", ".", "../index.tsx"]
+}

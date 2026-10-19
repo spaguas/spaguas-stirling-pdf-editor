@@ -1,0 +1,10 @@
+services:
+  stirling-pdf:
+    volumes:
+      - type: bind
+        source: ${COMMUNITY_LEGACY_BACKUP_DIR:?Set COMMUNITY_LEGACY_BACKUP_DIR to a stopped H2 backup directory}
+        target: /legacy-community-import
+        read_only: true
+    environment:
+      COMMUNITY_LEGACY_JDBC_URL: jdbc:h2:file:/legacy-community-import/${COMMUNITY_LEGACY_DB_NAME:-stirling-pdf-DB-2.3.232}
+      COMMUNITY_LEGACY_USERNAME: ${COMMUNITY_LEGACY_USERNAME:-sa}

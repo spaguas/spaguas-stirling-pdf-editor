@@ -146,8 +146,11 @@ public class AppConfig {
     @Bean(name = "activeSecurity")
     public boolean missingActiveSecurity() {
         return ClassUtils.isPresent(
-                "stirling.software.proprietary.security.configuration.SecurityConfiguration",
-                this.getClass().getClassLoader());
+                        "stirling.software.proprietary.security.configuration.SecurityConfiguration",
+                        this.getClass().getClassLoader())
+                || ClassUtils.isPresent(
+                        "stirling.software.community.CommunitySecurity",
+                        this.getClass().getClassLoader());
     }
 
     @Bean(name = "directoryFilter")

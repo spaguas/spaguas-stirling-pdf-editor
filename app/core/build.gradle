@@ -10,6 +10,9 @@ configurations {
 }
 
 dependencies {
+    if (gradle.ext.enableCommunity) {
+        implementation project(':community')
+    }
     if (!gradle.ext.disableAdditional) {
         implementation project(':proprietary')
     }
@@ -179,6 +182,8 @@ if (buildPrototypes) {
     frontendMode = frontendModeOverride
 } else if (gradle.ext.enableSaas) {
     frontendMode = 'saas'
+} else if (gradle.ext.enableCommunity) {
+    frontendMode = 'community'
 } else if (gradle.ext.disableAdditional) {
     frontendMode = 'core'
 } else {

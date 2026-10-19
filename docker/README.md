@@ -2,6 +2,12 @@
 
 This directory contains the organized Docker configurations for the split frontend/backend architecture.
 
+## Community: equipes, usuários e permissões
+
+Para executar sem dependência comercial de contas/equipes, use o modo `community`.
+O [guia Community](COMMUNITY.md) contém build, migração do banco H2, Nginx em `/editor-pdf`,
+validação e rollback. A configuração de produção padrão continua selecionando a edição original.
+
 ## Using Taskfile (Recommended)
 
 All Docker commands can be run from the project root using [Task](https://taskfile.dev/):

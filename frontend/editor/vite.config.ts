@@ -215,6 +215,7 @@ function subpathBareRedirectPlugin(subpath: string): PluginOption {
 // (task frontend:typecheck:cloud) to prove it carries no saas/desktop-only deps.
 const VALID_MODES = [
   "core",
+  "community",
   "proprietary",
   "saas",
   "desktop",
@@ -224,6 +225,7 @@ type BuildMode = (typeof VALID_MODES)[number];
 
 const TSCONFIG_MAP: Record<BuildMode, string> = {
   core: "./tsconfig.core.vite.json",
+  community: "./tsconfig.community.vite.json",
   proprietary: "./tsconfig.proprietary.vite.json",
   saas: "./tsconfig.saas.vite.json",
   desktop: "./tsconfig.desktop.vite.json",
@@ -250,7 +252,10 @@ export default defineConfig(async ({ mode, command }) => {
     : null;
   const flavor = (process.env.STIRLING_FLAVOR ?? "").toLowerCase();
   const flavorMode: BuildMode | null =
-    flavor === "core" || flavor === "proprietary" || flavor === "saas"
+    flavor === "core" ||
+    flavor === "community" ||
+    flavor === "proprietary" ||
+    flavor === "saas"
       ? (flavor as BuildMode)
       : null;
   const effectiveMode: BuildMode =
@@ -294,6 +299,7 @@ export default defineConfig(async ({ mode, command }) => {
     effectiveMode === "desktop"
       ? undefined
       : {
+          ...(runSubpath ? { [`/${runSubpath}/api`]: backendProxy } : {}),
           "/api": backendProxy,
           "/oauth2": backendProxy,
           "/saml2": backendProxy,

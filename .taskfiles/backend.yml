@@ -310,3 +310,23 @@ tasks:
         platforms: [linux, darwin]
       - cmd: powershell rm -Force -ErrorAction SilentlyContinue app/core/configs/stirling-pdf-DB-*.db, app/core/configs/settings.yml, app/core/configs/custom_settings.yml, app/core/configs/backup/db/backup_*.sql, app/core/configs/db/backup/backup_*.sql
         platforms: [windows]
+
+  check:community:
+    desc: "Check Community backend quality and permissions"
+    env:
+      STIRLING_FLAVOR: community
+    cmds:
+      - cmd: cmd /c ".\\gradlew.bat :common:check :community:check :stirling-pdf:compileJava{{.MAXW}}"
+        platforms: [windows]
+      - cmd: ./gradlew :common:check :community:check :stirling-pdf:compileJava{{.MAXW}}
+        platforms: [linux, darwin]
+
+  dev:community:
+    desc: "Start the Community backend"
+    env:
+      STIRLING_FLAVOR: community
+    cmds:
+      - cmd: cmd /c ".\\gradlew.bat :stirling-pdf:bootRun"
+        platforms: [windows]
+      - cmd: ./gradlew :stirling-pdf:bootRun
+        platforms: [linux, darwin]

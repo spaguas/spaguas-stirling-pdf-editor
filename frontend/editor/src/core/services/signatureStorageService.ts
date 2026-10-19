@@ -13,7 +13,14 @@ interface SignatureStorageCapabilities {
 /**
  * Service to handle signature storage with adaptive backend/localStorage fallback
  */
-class SignatureStorageService {
+export class SignatureStorageService {
+  /** Storage keys are resolved on use so account-scoped builds can settle identity before opening storage. */
+  constructor(
+    private readonly options?: {
+      backendEnabled?: boolean;
+      storageKey?: () => string;
+    },
+  ) {}
   private capabilities: SignatureStorageCapabilities | null = null;
   private detectionPromise: Promise<SignatureStorageCapabilities> | null = null;
 
@@ -21,6 +28,8 @@ class SignatureStorageService {
    * Detect if backend supports signature storage API
    */
   async detectCapabilities(): Promise<SignatureStorageCapabilities> {
+    if (this.options?.backendEnabled === false)
+      return { supportsBackend: false, storageType: "localStorage" };
     // Return cached result if already detected
     if (this.capabilities) {
       return this.capabilities;
@@ -221,7 +230,9 @@ class SignatureStorageService {
   }
 
   // LocalStorage methods
-  private readonly STORAGE_KEY = "stirling:saved-signatures:v1";
+  private get STORAGE_KEY(): string {
+    return this.options?.storageKey?.() ?? "stirling:saved-signatures:v1";
+  }
 
   private _loadFromLocalStorage(): SavedSignature[] {
     try {

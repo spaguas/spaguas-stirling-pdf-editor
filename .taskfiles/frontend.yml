@@ -504,6 +504,7 @@ tasks:
     desc: "Typecheck all build variants"
     cmds:
       - task: typecheck:core
+      - task: typecheck:community
       - task: typecheck:proprietary
       - task: typecheck:saas
       - task: typecheck:desktop
@@ -619,3 +620,32 @@ tasks:
         platforms: [windows]
       - cmd: rm -rf node_modules/.vite editor/dist dist
         platforms: [linux, darwin]
+
+  dev:community:
+    desc: "Start the Community editor"
+    deps: [prepare]
+    cmds:
+      - task: dev:_run
+        vars: { MODE: community, PORT: '{{.PORT}}', BACKEND_URL: '{{.BACKEND_URL}}' }
+
+  build:community:
+    desc: "Build the Community editor"
+    deps: [prepare]
+    cmds:
+      - npx vite build editor --mode community
+
+  typecheck:community:
+    desc: "Typecheck the Community editor"
+    deps: [prepare]
+    cmds:
+      - task: typecheck:_run
+        vars: { PROJECT: editor/src/community/tsconfig.json }
+
+  check:community:
+    desc: "Check Community editor quality and account isolation"
+    cmds:
+      - task: typecheck:community
+      - task: lint
+      - task: format:check
+      - npx vitest run --root editor --project community{{.VITEST_JOBS}}
+      - npx vitest run --root editor --project core indexedDBManager automationStorage{{.VITEST_JOBS}}

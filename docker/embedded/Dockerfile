@@ -40,6 +40,9 @@ ENV JDK_JAVA_OPTIONS="--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNN
   --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED \
   --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
 
+ARG STIRLING_FLAVOR=proprietary
+ENV STIRLING_FLAVOR=${STIRLING_FLAVOR}
+
 WORKDIR /app
 
 COPY build.gradle settings.gradle gradlew ./
@@ -48,6 +51,7 @@ COPY buildSrc/build.gradle                 buildSrc/
 COPY buildSrc/src/main/                    buildSrc/src/main/
 COPY app/core/build.gradle                  app/core/
 COPY app/common/build.gradle                app/common/
+COPY app/community/build.gradle             app/community/
 COPY app/proprietary/build.gradle           app/proprietary/
 
 # Use system gradle instead of gradlew to avoid SSL issues downloading gradle distribution on emulated arm64
@@ -57,8 +61,6 @@ RUN --mount=type=secret,id=gradle_properties,target=/home/gradle/.gradle/gradle.
 COPY . .
 
 ARG PROTOTYPES_BUILD=false
-ARG STIRLING_FLAVOR=proprietary
-ENV STIRLING_FLAVOR=${STIRLING_FLAVOR}
 # Embed the admin portal app at /portal. Set true by the deploy workflow when the
 # portal or AI layers change; defaults false so normal builds skip the extra app.
 ARG BUILD_PORTAL=false

@@ -2,6 +2,8 @@
  * Service for managing automation configurations in IndexedDB
  */
 
+import { browserDatabaseName } from "@app/services/browserDatabaseName";
+
 export interface AutomationConfig {
   id: string;
   name: string;
@@ -22,7 +24,10 @@ class AutomationStorage {
 
   async init(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.dbVersion);
+      const request = indexedDB.open(
+        browserDatabaseName(this.dbName),
+        this.dbVersion,
+      );
 
       request.onerror = () => {
         reject(new Error("Failed to open automation storage database"));
